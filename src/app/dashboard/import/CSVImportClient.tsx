@@ -118,6 +118,12 @@ export default function CSVImportClient({ userId }: Props) {
         </div>
       ) : (
         <div className="space-y-6">
+          {error && (
+            <div className="flex items-center gap-2 text-red-500 text-sm font-bold bg-red-500/10 px-4 py-2 rounded-lg">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xl font-bold">Förhandsgranskning</h2>
             <div className="flex gap-3">
