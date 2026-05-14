@@ -39,7 +39,9 @@ export default function AddBillModal({ userId }: { userId: string }) {
           category: formData.category,
           owner: formData.owner,
           notes: formData.notes,
-          created_by: userId
+          created_by: userId,
+          split_type: formData.owner === 'shared' ? '50/50' : 'full',
+          paid_by: formData.owner === 'shared' ? 'emil' : formData.owner // Default shared to Emil paying initially
         })
         .select()
         .single()
