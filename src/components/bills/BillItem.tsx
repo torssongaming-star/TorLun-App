@@ -1,103 +1,134 @@
 'use client'
 
+import { Bill, PaymentMethod } from '@/types/database'
 import { useState } from 'react'
-import { Bill, Profile } from '@/types/database'
-import { Check, X, User, Calendar, MessageSquare, Clock } from 'lucide-react'
+import { Check, Clock, User, ArrowRight, CreditCard, Repeat, Building2, FileText, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
 interface Props {
   bill: Bill
-  profiles: Profile[]
-  currentUserId: string
 }
 
-export default function BillItem({ bill, profiles, currentUserId }: Props) {
+export default function BillItem({ bill }: Props) {
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
   const supabase = createClient()
-
-  const responsibleProfile = profiles.find(p => p.display_name?.toLowerCase() === bill.owner?.toLowerCase())
-  const paidByProfile = profiles.find(p => p.id === bill.paid_by_user_id)
+  const router = useRouter()
 
   const togglePaid = async () => {
     setLoading(true)
-    try {
-      const { error } = await supabase
-        .from('bills')
-        .update({
-          is_paid: !bill.is_paid,
-          paid_at: !bill.is_paid ? new Date().toISOString() : null,
-          paid_by_user_id: !bill.is_paid ? currentUserId : null
-        })
-        .eq('id', bill.id)
+    const { error } = await supabase
+      .from('bills')
+      .update({ 
+        is_paid: !bill.is_paid,
+        paid_at: !bill.is_paid ? new Date().toISOString() : null
+      })
+      .eq('id', bill.id)
 
-      if (error) throw error
+    if (!error) {
       router.refresh()
-    } catch (err: any) {
-      alert('Kunde inte uppdatera status: ' + err.message)
-    } finally {
-      setLoading(false)
+    }
+    setLoading(false)
+  }
+
+  const getOwnerName = (owner: string) => {
+    if (owner === 'emil') return 'Emil'
+    if (owner === 'partner') return 'Emmelinn'
+    return 'Gemensam'
+  }
+
+  const getMethodBadge = (method: PaymentMethod) => {
+    switch (method) {
+      case 'Autogiro':
+        return <span className="bg-blue-500/10 text-blue-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1"><Repeat size={10} /> Autogiro</span>
+      case 'E-faktura':
+        return <span className="bg-purple-500/10 text-purple-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-purple-500/20 flex items-center gap-1"><FileText size={10} /> E-faktura</span>
+      case 'Bankgiro':
+        return <span className="bg-orange-500/10 text-orange-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-orange-500/20 flex items-center gap-1"><Building2 size={10} /> Bankgiro</span>
+      default:
+        return null
     }
   }
 
+  const isDueSoon = !bill.is_paid && new Date(bill.date).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000
+
   return (
-    <div className={`bg-[#1a1a1a] border ${bill.is_paid ? 'border-white/5 opacity-60' : 'border-white/10'} p-5 rounded-3xl space-y-4 transition-all active:scale-[0.98]`}>
-      <div className="flex items-start justify-between">
+    <div className={`group bg-[#1a1a1a] border ${isDueSoon ? 'border-red-500/20 shadow-lg shadow-red-500/5' : 'border-white/5'} rounded-3xl p-5 space-y-4 transition-all hover:bg-[#222] active:scale-[0.98]`}>
+      <div className="flex justify-between items-start">
         <div className="space-y-1">
-          <h3 className="font-bold text-white text-lg leading-tight">{bill.title}</h3>
-          <div className="flex items-center gap-2 text-gray-400 text-xs font-medium">
-            <span className="bg-white/5 px-2 py-0.5 rounded uppercase tracking-wider">{bill.category || 'Övrigt'}</span>
-            <span className="flex items-center gap-1">
-              <Calendar size={12} />
-              {bill.date}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bold text-white text-lg tracking-tight">{bill.title}</h3>
+            {getMethodBadge(bill.payment_method)}
+            {bill.is_recurring && <span className="text-gray-600"><Repeat size={14} /></span>}
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+            <span>{bill.category || bill.budget_category?.name || 'Övrigt'}</span>
+            <span>•</span>
+            <span className={isDueSoon ? 'text-red-400 font-bold' : ''}>{bill.date}</span>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xl font-bold text-white">{bill.amount.toLocaleString('sv-SE')} kr</p>
-          <div className="flex items-center justify-end gap-1 text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
-            <User size={10} />
-            {bill.owner === 'shared' ? 'Gemensam' : (responsibleProfile?.display_name || bill.owner)}
+          <div className="text-xl font-black text-white tracking-tighter">
+            {bill.amount.toLocaleString('sv-SE')} <span className="text-xs text-gray-500 font-bold">kr</span>
+          </div>
+          <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+            {getOwnerName(bill.owner)}
           </div>
         </div>
       </div>
 
-      {bill.notes && (
-        <div className="bg-black/20 p-3 rounded-xl flex items-start gap-2 text-xs text-gray-400 italic">
-          <MessageSquare size={14} className="mt-0.5 shrink-0" />
-          <p>{bill.notes}</p>
+      {(bill.bankgiro_number || bill.ocr_number) && (
+        <div className="bg-black/40 rounded-xl p-3 grid grid-cols-2 gap-4 border border-white/5">
+          {bill.bankgiro_number && (
+            <div className="space-y-1">
+              <span className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">Bankgiro</span>
+              <p className="text-[10px] font-mono text-gray-300">{bill.bankgiro_number}</p>
+            </div>
+          )}
+          {bill.ocr_number && (
+            <div className="space-y-1">
+              <span className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">OCR</span>
+              <p className="text-[10px] font-mono text-gray-300">{bill.ocr_number}</p>
+            </div>
+          )}
         </div>
       )}
 
-      {bill.is_paid && paidByProfile && (
-        <div className="flex items-center gap-2 text-[10px] text-green-500 font-bold uppercase tracking-widest bg-green-500/5 p-2 rounded-xl border border-green-500/10">
-          <Clock size={12} />
-          <span>Betald av {paidByProfile.display_name} {bill.paid_at && `(${new Date(bill.paid_at).toLocaleDateString()})`}</span>
+      {bill.payment_method === 'Autogiro' && !bill.is_paid && (
+        <div className="flex items-center gap-2 text-blue-400/80 text-[10px] font-bold bg-blue-400/5 p-2 rounded-lg border border-blue-400/10">
+          <AlertCircle size={12} />
+          <span>Förväntas dras automatiskt</span>
         </div>
       )}
 
-      <button
-        onClick={togglePaid}
-        disabled={loading}
-        className={`w-full py-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-          bill.is_paid
-            ? 'bg-white/5 text-gray-400 hover:bg-white/10'
-            : 'bg-white text-black hover:bg-gray-200 shadow-lg'
-        }`}
-      >
-        {bill.is_paid ? (
-          <>
-            <X size={18} />
-            Markera som obetald
-          </>
-        ) : (
-          <>
-            <Check size={18} />
-            Markera som betald
-          </>
+      <div className="flex items-center justify-between pt-2">
+        <button
+          onClick={togglePaid}
+          disabled={loading}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all ${
+            bill.is_paid 
+              ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
+              : 'bg-white text-black hover:bg-gray-200 shadow-lg'
+          }`}
+        >
+          {loading ? (
+            <Clock className="animate-spin" size={14} />
+          ) : bill.is_paid ? (
+            <>
+              <Check size={14} />
+              Betald
+            </>
+          ) : (
+            'Markera som betald'
+          )}
+        </button>
+
+        {bill.notes && (
+          <p className="text-[10px] text-gray-600 italic truncate max-w-[120px]">
+            {bill.notes}
+          </p>
         )}
-      </button>
+      </div>
     </div>
   )
 }
