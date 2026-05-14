@@ -44,9 +44,26 @@ export default async function DashboardPage({ searchParams }: Props) {
     .eq('month', month)
     .eq('year', year)
 
-  const { data: profiles } = await supabase
+  let { data: profiles } = await supabase
     .from('profiles')
     .select('*')
+
+  // If the current user doesn't have a profile yet, create it
+  if (profiles && !profiles.find(p => p.id === user.id)) {
+    const { data: newProfile } = await supabase
+      .from('profiles')
+      .insert({
+        id: user.id,
+        email: user.email!,
+        display_name: user.user_metadata.display_name || user.email?.split('@')[0]
+      })
+      .select()
+      .single()
+    
+    if (newProfile) {
+      profiles = [...(profiles || []), newProfile]
+    }
+  }
 
   const { data: matches } = await supabase
     .from('bill_transaction_matches')

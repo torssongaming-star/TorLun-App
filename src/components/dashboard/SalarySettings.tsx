@@ -99,34 +99,40 @@ export default function SalarySettings({
       </div>
       
       <div className="space-y-4">
-        {profiles.map((profile) => {
-          const isEmil = profile.display_name?.toLowerCase().includes('emil') || profile.email.toLowerCase().includes('emil')
-          const label = isEmil ? 'Emils nettoinkomst' : 'Emmelinns nettoinkomst'
-          
-          return (
-            <div key={profile.id} className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                {label}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={amounts[profile.id] || '0'}
-                  onChange={(e) => setAmounts({ ...amounts, [profile.id]: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:border-white/20 text-white"
-                  placeholder="0"
-                />
-                <button
-                  onClick={() => handleSave(profile.id)}
-                  disabled={loading}
-                  className="p-2 bg-white text-black rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all flex items-center justify-center min-w-[40px]"
-                >
-                  <Save size={18} />
-                </button>
+        {(!profiles || profiles.length === 0) ? (
+          <p className="text-xs text-gray-500 italic text-center py-4">
+            Inga profiler hittades. Se till att du har skapat din profil i databasen.
+          </p>
+        ) : (
+          profiles.map((profile) => {
+            const isEmil = profile.display_name?.toLowerCase().includes('emil') || profile.email.toLowerCase().includes('emil')
+            const label = isEmil ? 'Emils nettoinkomst' : 'Emmelinns nettoinkomst'
+            
+            return (
+              <div key={profile.id} className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                  {label}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={amounts[profile.id] || '0'}
+                    onChange={(e) => setAmounts({ ...amounts, [profile.id]: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:border-white/20 text-white"
+                    placeholder="0"
+                  />
+                  <button
+                    onClick={() => handleSave(profile.id)}
+                    disabled={loading}
+                    className="p-2 bg-white text-black rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all flex items-center justify-center min-w-[40px]"
+                  >
+                    <Save size={18} />
+                  </button>
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        )}
       </div>
     </div>
   )
