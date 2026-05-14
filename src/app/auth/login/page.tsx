@@ -25,36 +25,50 @@ export default function LoginPage() {
     }
 
     // Try to sign in
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password: AUTH_PASSWORD,
     })
 
     if (signInError) {
-      // If sign in fails, try to sign up (first time use)
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password: AUTH_PASSWORD,
-        options: {
-          data: {
-            display_name: name,
-          },
-        },
-      })
-
-      if (signUpError) {
-        setError('Kunde inte logga in: ' + signUpError.message)
+      // Check if it's a rate limit error
+      if (signInError.message.toLowerCase().includes('rate limit')) {
+        setError('För många försök. Vänta en stund eller prova från en annan enhet.')
         setLoading(null)
-      } else {
-        // Sign up successful, redirect to dashboard
-        router.push('/dashboard')
-        router.refresh()
+        return
       }
-    } else {
-      // Sign in successful, redirect to dashboard
-      router.push('/dashboard')
-      router.refresh()
+
+      // If sign in fails because user not found, try to sign up
+      if (signInError.message.toLowerCase().includes('invalid login credentials')) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: AUTH_PASSWORD,
+          options: {
+            data: {
+              display_name: name,
+            },
+          },
+        })
+
+        if (signUpError) {
+          if (signUpError.message.toLowerCase().includes('rate limit')) {
+            setError('E-postgräns nådd. Vänta 15 minuter eller stäng av "Confirm Email" i Supabase.')
+          } else {
+            setError('Kunde inte skapa konto: ' + signUpError.message)
+          }
+          setLoading(null)
+          return
+        }
+      } else {
+        setError('Inloggningsfel: ' + signInError.message)
+        setLoading(null)
+        return
+      }
     }
+    
+    // Success - redirect to dashboard
+    router.push('/dashboard')
+    router.refresh()
   }
 
   return (
