@@ -3,13 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-export default function MonthSwitcher() {
+interface Props {
+  currentMonth: number
+  currentYear: number
+}
+
+export default function MonthSwitcher({ currentMonth: month, currentYear: year }: Props) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  
-  const now = new Date()
-  const month = parseInt(searchParams.get('month') || (now.getMonth() + 1).toString())
-  const year = parseInt(searchParams.get('year') || now.getFullYear().toString())
 
   const handlePrev = () => {
     let newMonth = month - 1
