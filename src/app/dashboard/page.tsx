@@ -154,7 +154,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       <section className="space-y-4 bg-[#1a1a1a]/50 border border-white/5 p-6 rounded-[2.5rem]">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white tracking-tight">Budget</h2>
-          <Link href="/dashboard/settings/banking" className="text-xs font-bold text-indigo-400 flex items-center gap-1">
+          <Link href="/dashboard/budget" className="text-xs font-bold text-indigo-400 flex items-center gap-1">
             Hantera <ArrowRight size={14} />
           </Link>
         </div>
@@ -210,8 +210,13 @@ export default async function DashboardPage({ searchParams }: Props) {
 
       {/* Recent Bank Confirm */}
       {recentTransactions && recentTransactions.length > 0 && (
-        <section className="pt-10 border-t border-white/5 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
-          <h2 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] text-center mb-4">Bankhistorik</h2>
+        <section className="pt-10 border-t border-white/5 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all space-y-4">
+          <div className="flex flex-col items-center gap-2">
+            <h2 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] text-center">Bankhistorik</h2>
+            <Link href="/dashboard/import" className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full flex items-center gap-1">
+              <FileUp size={12} /> Importera fil
+            </Link>
+          </div>
           <div className="max-w-md mx-auto space-y-1">
             {recentTransactions.map((tx: any) => (
               <div key={tx.id} className="flex justify-between items-center text-[10px] px-2">
