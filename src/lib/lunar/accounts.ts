@@ -2,7 +2,7 @@ import { lunarClient } from './lunarClient'
 import { refreshAccessToken } from './auth'
 import { lunarConfig } from './config'
 import { LunarAccount } from './types'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export async function fetchAccounts(userId: string): Promise<LunarAccount[]> {
   if (lunarConfig.mode === 'mock') {

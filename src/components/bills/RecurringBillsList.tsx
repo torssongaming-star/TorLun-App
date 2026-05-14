@@ -2,7 +2,7 @@
 
 import { RecurringBill } from '@/types/database'
 import { Plus, Trash2, Calendar } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 

@@ -2,7 +2,7 @@
 
 import { Profile, MonthlyIncome } from '@/types/database'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Save, Calendar } from 'lucide-react'
 

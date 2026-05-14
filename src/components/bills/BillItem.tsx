@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Bill, Profile } from '@/types/database'
 import { Check, X, User, Calendar, MessageSquare, Clock } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
 interface Props {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exchangeCodeForTokens } from '@/lib/lunar/auth'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { syncAccounts } from '@/lib/lunar/accounts'
 
 export async function GET(req: NextRequest) {

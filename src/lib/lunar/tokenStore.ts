@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { lunarConfig } from './config'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 const ALGORITHM = 'aes-256-cbc'
 

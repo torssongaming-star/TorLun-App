@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import BillList from '@/components/bills/BillList'
 import StatsCards from '@/components/dashboard/StatsCards'

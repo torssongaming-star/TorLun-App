@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthorizationUrl } from '@/lib/lunar/auth'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { v4 as uuidv4 } from 'uuid'
 
 export async function GET(req: NextRequest) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { syncAccounts } from '@/lib/lunar/accounts'
 import { syncTransactions } from '@/lib/lunar/transactions'
 import { matchTransactionsToBills, MatchResult } from '@/lib/lunar/transactionMatcher'
