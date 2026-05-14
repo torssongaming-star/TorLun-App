@@ -73,6 +73,13 @@ export default async function DashboardPage({ searchParams }: Props) {
     }
   }
 
+  // Fetch recent bank transactions
+  const { data: recentTransactions } = await supabase
+    .from('bank_transactions')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(5)
+
   const { data: matches } = await supabase
     .from('bill_transaction_matches')
     .select(`
@@ -166,6 +173,26 @@ export default async function DashboardPage({ searchParams }: Props) {
           selectedYear={year}
         />
       </section>
+
+      {/* Show recent bank transactions for confirmation */}
+      {recentTransactions && recentTransactions.length > 0 && (
+        <section className="space-y-4 pt-10 border-t border-white/5 opacity-50">
+          <h2 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] text-center">Senaste importerade transaktioner</h2>
+          <div className="max-w-md mx-auto bg-[#1a1a1a] rounded-2xl overflow-hidden border border-white/5">
+            {recentTransactions.map((tx: any) => (
+              <div key={tx.id} className="p-3 border-b border-white/5 last:border-0 flex justify-between items-center text-[10px]">
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-300 truncate max-w-[150px]">{tx.description}</span>
+                  <span className="text-gray-600">{tx.transaction_date}</span>
+                </div>
+                <span className={`font-bold ${tx.amount < 0 ? 'text-red-500/70' : 'text-green-500/70'}`}>
+                  {tx.amount.toLocaleString('sv-SE')} kr
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   )
 }
