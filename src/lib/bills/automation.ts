@@ -13,7 +13,7 @@ export async function createNextMonthBills(month: number, year: number) {
   }
 
   // 1. Get all recurring bills for the current month
-  const { data: bills } = await supabase
+  const { data: billsData } = await supabase
     .from('bills')
     .select('*')
     .eq('is_recurring', true)
@@ -22,15 +22,19 @@ export async function createNextMonthBills(month: number, year: number) {
     .gte('date', `${year}-${month.toString().padStart(2, '0')}-01`)
     .lte('date', `${year}-${month.toString().padStart(2, '0')}-31`)
 
-  if (!bills || bills.length === 0) {
+  const bills = (billsData as Bill[]) || []
+
+  if (bills.length === 0) {
     return { created: 0, skipped: 0 }
   }
 
   // 2. Get existing bills for next month to avoid duplicates
-  const { data: existingNextBills } = await supabase
+  const { data: existingNextBillsData } = await supabase
     .from('bills')
     .gte('date', `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`)
     .lte('date', `${nextYear}-${nextMonth.toString().padStart(2, '0')}-31`)
+  
+  const existingNextBills = (existingNextBillsData as Bill[]) || []
 
   let createdCount = 0
   let skippedCount = 0
