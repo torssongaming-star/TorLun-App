@@ -44,12 +44,14 @@ export default async function DashboardPage({ searchParams }: Props) {
     .eq('month', month)
     .eq('year', year)
 
-  let { data: profiles } = await supabase
+  let { data: profilesData } = await supabase
     .from('profiles')
     .select('*')
+  
+  let profiles = (profilesData as Profile[]) || []
 
   // If the current user doesn't have a profile yet, create it
-  if (profiles && !profiles.find(p => p.id === user.id)) {
+  if (!profiles.find(p => p.id === user.id)) {
     const { data: newProfile } = await supabase
       .from('profiles')
       .insert({
