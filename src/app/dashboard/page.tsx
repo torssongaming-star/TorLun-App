@@ -44,15 +44,19 @@ export default async function DashboardPage({ searchParams }: Props) {
     .eq('month', month)
     .eq('year', year)
 
-  let { data: profilesData } = await supabase
+  let { data: profilesData, error: profilesError } = await supabase
     .from('profiles')
     .select('*')
   
+  if (profilesError) {
+    console.error('Error fetching profiles:', profilesError)
+  }
+
   let profiles = (profilesData as Profile[]) || []
 
   // If the current user doesn't have a profile yet, create it
   if (!profiles.find(p => p.id === user.id)) {
-    const { data: newProfile } = await supabase
+    const { data: newProfile, error: insertError } = await supabase
       .from('profiles')
       .insert({
         id: user.id,
@@ -62,8 +66,10 @@ export default async function DashboardPage({ searchParams }: Props) {
       .select()
       .single()
     
-    if (newProfile) {
-      profiles = [...(profiles || []), newProfile]
+    if (insertError) {
+      console.error('Error creating profile:', insertError)
+    } else if (newProfile) {
+      profiles = [...profiles, newProfile]
     }
   }
 
