@@ -30,12 +30,14 @@ export default async function DashboardPage({ searchParams }: Props) {
   const lastDay = new Date(year, month, 0).toISOString().split('T')[0]
 
   // 1. Fetch Bills
-  const { data: bills } = await supabase
+  const { data: billsData } = await supabase
     .from('bills')
     .select('*, budget_category:budget_categories(*)')
     .gte('date', firstDay)
     .lte('date', lastDay)
     .order('date', { ascending: true })
+  
+  const bills = (billsData as Bill[]) || []
 
   // 2. Fetch Profiles & Incomes
   let { data: profilesData } = await supabase.from('profiles').select('*')
@@ -54,8 +56,11 @@ export default async function DashboardPage({ searchParams }: Props) {
     .eq('year', year)
 
   // 3. Fetch Budget Data
-  const { data: categories } = await supabase.from('budget_categories').select('*').eq('is_active', true).order('sort_order')
-  const { data: budgets } = await supabase.from('monthly_budgets').select('*').eq('month', month).eq('year', year)
+  const { data: categoriesData } = await supabase.from('budget_categories').select('*').eq('is_active', true).order('sort_order')
+  const { data: budgetsData } = await supabase.from('monthly_budgets').select('*').eq('month', month).eq('year', year)
+
+  const categories = (categoriesData as BudgetCategory[]) || []
+  const budgets = (budgetsData as MonthlyBudget[]) || []
 
   // 4. Fetch Bank Data
   const { data: recentTransactions } = await supabase.from('bank_transactions').select('*').order('created_at', { ascending: false }).limit(5)
@@ -65,8 +70,8 @@ export default async function DashboardPage({ searchParams }: Props) {
     transaction:bank_transactions(description, amount, transaction_date)
   `).is('approved_at', null).is('ignored_at', null)
 
-  const unpaidBills = bills?.filter(b => !b.is_paid) || []
-  const paidBills = bills?.filter(b => b.is_paid) || []
+  const unpaidBills = bills.filter(b => !b.is_paid)
+  const paidBills = bills.filter(b => b.is_paid)
   const dueSoon = unpaidBills.filter(b => {
     const due = new Date(b.date).getTime()
     const today = new Date().getTime()
@@ -75,11 +80,11 @@ export default async function DashboardPage({ searchParams }: Props) {
   const unpaidAutogiro = unpaidBills.filter(b => b.payment_method === 'Autogiro')
 
   // Budget calculations
-  const budgetStatus = categories?.map(cat => {
-    const budget = budgets?.find(b => b.category_id === cat.id)?.budget_amount || 0
-    const spent = bills?.filter(b => b.category_id === cat.id).reduce((sum, b) => sum + b.amount, 0) || 0
+  const budgetStatus = categories.map(cat => {
+    const budget = budgets.find(b => b.category_id === cat.id)?.budget_amount || 0
+    const spent = bills.filter(b => b.category_id === cat.id).reduce((sum, b) => sum + b.amount, 0)
     return { ...cat, budget, spent, remaining: budget - spent }
-  }).sort((a, b) => b.budget - a.budget) || []
+  }).sort((a, b) => b.budget - a.budget)
 
   const overBudget = budgetStatus.filter(b => b.remaining < 0)
 
