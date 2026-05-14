@@ -4,7 +4,7 @@ import { Profile, MonthlyIncome } from '@/types/database'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Save, Calendar } from 'lucide-react'
+import { Save, Calendar, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface Props {
   profiles: Profile[]
@@ -26,6 +26,8 @@ export default function SalarySettings({
   const supabase = createClient()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  
+  const [success, setSuccess] = useState<Record<string, boolean>>({})
   
   const [amounts, setAmounts] = useState<Record<string, string>>({})
 
@@ -54,7 +56,9 @@ export default function SalarySettings({
       }, { onConflict: 'profile_id, month, year' })
 
     if (!error) {
+      setSuccess({ ...success, [profileId]: true })
       router.refresh()
+      setTimeout(() => setSuccess(prev => ({ ...prev, [profileId]: false })), 3000)
     } else {
       alert('Kunde inte spara inkomst: ' + error.message)
     }
@@ -73,7 +77,7 @@ export default function SalarySettings({
   return (
     <div className="bg-[#1a1a1a] border border-white/5 p-6 rounded-2xl space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg">Månadsinkomster</h3>
+        <h3 className="font-semibold text-lg text-white">Månadsinkomster</h3>
         <Calendar size={18} className="text-gray-500" />
       </div>
 
@@ -81,19 +85,19 @@ export default function SalarySettings({
         <select 
           value={selectedMonth}
           onChange={(e) => handleMonthYearChange(parseInt(e.target.value), selectedYear)}
-          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm text-white focus:outline-none appearance-none"
         >
           {months.map((m, i) => (
-            <option key={m} value={i + 1}>{m}</option>
+            <option key={m} value={i + 1} className="bg-[#1a1a1a] text-white">{m}</option>
           ))}
         </select>
         <select 
           value={selectedYear}
           onChange={(e) => handleMonthYearChange(selectedMonth, parseInt(e.target.value))}
-          className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+          className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm text-white focus:outline-none appearance-none"
         >
           {[2024, 2025, 2026, 2027].map(y => (
-            <option key={y} value={y}>{y}</option>
+            <option key={y} value={y} className="bg-[#1a1a1a] text-white">{y}</option>
           ))}
         </select>
       </div>
@@ -101,32 +105,39 @@ export default function SalarySettings({
       <div className="space-y-4">
         {(!profiles || profiles.length === 0) ? (
           <p className="text-xs text-gray-500 italic text-center py-4">
-            Inga profiler hittades. Se till att du har skapat din profil i databasen.
+            Inga profiler hittades.
           </p>
         ) : (
           profiles.map((profile) => {
             const isEmil = profile.display_name?.toLowerCase().includes('emil') || profile.email.toLowerCase().includes('emil')
             const label = isEmil ? 'Emils nettoinkomst' : 'Emmelinns nettoinkomst'
+            const isSuccessful = success[profile.id]
             
             return (
               <div key={profile.id} className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                   {label}
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={amounts[profile.id] || '0'}
-                    onChange={(e) => setAmounts({ ...amounts, [profile.id]: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:border-white/20 text-white"
-                    placeholder="0"
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={amounts[profile.id] || '0'}
+                      onChange={(e) => setAmounts({ ...amounts, [profile.id]: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-white/20 text-white font-bold"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500 uppercase">kr</span>
+                  </div>
                   <button
                     onClick={() => handleSave(profile.id)}
                     disabled={loading}
-                    className="p-2 bg-white text-black rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all flex items-center justify-center min-w-[40px]"
+                    className={`p-3 rounded-xl transition-all flex items-center justify-center min-w-[48px] ${
+                      isSuccessful ? 'bg-green-500 text-white' : 'bg-white text-black hover:bg-gray-200'
+                    }`}
                   >
-                    <Save size={18} />
+                    {loading ? <Loader2 className="animate-spin" size={20} /> : isSuccessful ? <CheckCircle2 size={20} /> : <Save size={20} />}
                   </button>
                 </div>
               </div>
