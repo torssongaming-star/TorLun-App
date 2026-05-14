@@ -146,7 +146,7 @@ export default function AddBillModal({ userId }: { userId: string }) {
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                 >
                   {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id} className="bg-[#1a1a1a] text-white">{c.name}</option>
                   ))}
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
@@ -202,9 +202,9 @@ export default function AddBillModal({ userId }: { userId: string }) {
                 className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none appearance-none"
                 value={formData.owner} onChange={(e) => setFormData({ ...formData, owner: e.target.value as any })}
               >
-                <option value="shared">Gemensam</option>
-                <option value="emil">Emil</option>
-                <option value="partner">Emmelinn</option>
+                <option value="shared" className="bg-[#1a1a1a] text-white">Gemensam</option>
+                <option value="emil" className="bg-[#1a1a1a] text-white">Emil</option>
+                <option value="partner" className="bg-[#1a1a1a] text-white">Emmelinn</option>
               </select>
             </div>
 
