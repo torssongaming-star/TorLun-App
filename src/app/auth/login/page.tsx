@@ -10,10 +10,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabase.auth) {
+      setError('Supabase is not configured. Please add environment variables to Vercel.')
+      return
+    }
     setLoading(true)
     setError(null)
 
@@ -32,6 +37,10 @@ export default function LoginPage() {
   }
 
   const handleSignUp = async () => {
+    if (!supabase.auth) {
+      setError('Supabase is not configured.')
+      return
+    }
     setLoading(true)
     setError(null)
 
