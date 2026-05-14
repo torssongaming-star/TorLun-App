@@ -3,122 +3,101 @@
 import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
+import { User, Loader2 } from 'lucide-react'
+
+const AUTH_PASSWORD = process.env.NEXT_PUBLIC_AUTH_PASSWORD || 'torlund2026'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  
   const supabase = createClient()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!supabase.auth) {
-      setError('Supabase is not configured. Please add environment variables to Vercel.')
-      return
-    }
-    setLoading(true)
+  const handleQuickLogin = async (name: string) => {
+    const email = `${name.toLowerCase()}@torlund.app`
+    setLoading(name)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    if (!supabase.auth) {
+      setError('Supabase är inte konfigurerat korrekt.')
+      setLoading(null)
+      return
+    }
+
+    // Try to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password: AUTH_PASSWORD,
     })
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
+    if (signInError) {
+      // If sign in fails, try to sign up (first time use)
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password: AUTH_PASSWORD,
+        options: {
+          data: {
+            display_name: name,
+          },
+        },
+      })
+
+      if (signUpError) {
+        setError('Kunde inte logga in: ' + signUpError.message)
+        setLoading(null)
+      } else {
+        // Sign up successful, redirect to dashboard
+        router.push('/dashboard')
+        router.refresh()
+      }
     } else {
+      // Sign in successful, redirect to dashboard
       router.push('/dashboard')
       router.refresh()
     }
   }
 
-  const handleSignUp = async () => {
-    if (!supabase.auth) {
-      setError('Supabase is not configured.')
-      return
-    }
-    setLoading(true)
-    setError(null)
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: email.split('@')[0],
-        },
-      },
-    })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      setError('Check your email for the confirmation link!')
-      setLoading(false)
-    }
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full glass-card p-8 space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">TorLund Bill Tracker</h1>
-          <p className="text-gray-500 mt-2">Manage shared expenses with ease.</p>
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6 space-y-12">
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-bold text-white tracking-tighter">TorLund</h1>
+        <p className="text-gray-500 font-medium">Vem är det som loggar in?</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-sm">
+        <button
+          onClick={() => handleQuickLogin('Emil')}
+          disabled={!!loading}
+          className="group relative bg-[#1a1a1a] border border-white/5 p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all hover:bg-white/5 active:scale-95 disabled:opacity-50"
+        >
+          <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+            {loading === 'Emil' ? <Loader2 className="animate-spin" size={32} /> : <User size={32} />}
+          </div>
+          <span className="text-xl font-bold text-white">Emil</span>
+          <div className="absolute top-4 right-4 w-2 h-2 bg-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
+
+        <button
+          onClick={() => handleQuickLogin('Emmelinn')}
+          disabled={!!loading}
+          className="group relative bg-[#1a1a1a] border border-white/5 p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all hover:bg-white/5 active:scale-95 disabled:opacity-50"
+        >
+          <div className="w-20 h-20 bg-pink-500/10 rounded-full flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
+            {loading === 'Emmelinn' ? <Loader2 className="animate-spin" size={32} /> : <User size={32} />}
+          </div>
+          <span className="text-xl font-bold text-white">Emmelinn</span>
+          <div className="absolute top-4 right-4 w-2 h-2 bg-pink-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-red-500 text-xs font-bold animate-in fade-in zoom-in duration-300">
+          {error}
         </div>
+      )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full input-field"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full input-field"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-xl text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="flex flex-col gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full disabled:opacity-50"
-            >
-              {loading ? 'Processing...' : 'Sign In'}
-            </button>
-            <button
-              type="button"
-              onClick={handleSignUp}
-              disabled={loading}
-              className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
-            >
-              Don&apos;t have an account? Sign Up
-            </button>
-          </div>
-        </form>
+      <div className="text-[10px] text-gray-600 font-bold uppercase tracking-[0.3em] pt-12">
+        Privat Familjeapp • 2026
       </div>
     </div>
   )
